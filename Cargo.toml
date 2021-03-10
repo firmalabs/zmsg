@@ -1,0 +1,17 @@
+[package]
+name = "cardano-systemd"
+version = "0.1.0"
+authors = ["Pancy <pancy@xerberus.net>"]
+edition = "2018"
+
+[[bin]]
+bench = false
+path = "src/main.rs"
+name = "cardano-systemd"
+
+[dependencies]
+console = "0.14"
+anyhow = "1.0"
+structopt = "0.3"
+rayon = "1.5"
+
