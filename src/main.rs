@@ -73,21 +73,27 @@ fn check_service_file(filename: String) -> Option<String> {
 
 fn run_service_scripts(action: String, service_names: &[String]) -> Result<()> {
     let _ = check_services_or_err(service_names)
-	.with_context(|| format!("One or more service files are missing!"))?;
+	.with_context(|| format!("Missing service file"))?;
+    
     service_names.par_iter()
 	.for_each(|name| {
-	    Command::new("systemctl")
+	    let output = Command::new("sudo systemctl")
 		.args(&[action.clone(), format!("{}.service", name)])
 		.output()
 		.with_context(|| format!("Failed to {} the {} script!", action, name));
+	    println!("{:?}", output.unwrap().stdout);
 	});
     Ok(())
 }
 
 fn check_services_or_err(services: &[String]) -> Result<()> {
-    for service in services {
-	if let None = check_service_file(service.to_string()) {
-	    return Err(anyhow!("Service file for {} not found", service));
+    let srv = services
+	.iter()
+	.map(|s| format!("{}.service", s));
+
+    for s in srv {
+	if let None = check_service_file(s.clone()) {
+	    return Err(anyhow!("Service file for {} not found", s));
 	}
     }
     Ok(())
