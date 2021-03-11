@@ -25,6 +25,8 @@ enum Cmd {
     Stop,
     /// Call `sudo systemctl status <service>`.
     Status,
+    /// Call `sudo systemctl kill -s SIGINT <service>`
+    Interrupt,
     /// List available systemd unit files in `/etc/systemd/system`.
     List,
 }
@@ -36,6 +38,7 @@ impl ToString for Cmd {
 	    Self::Stop => String::from("stop"),
 	    Self::Status => String::from("status"),
 	    Self::List => String::from("list"),
+	    Self::Interrupt => String::from("interrupt"),
 	}
     }
 }
@@ -78,15 +81,22 @@ fn check_service_file(filename: String) -> Option<String> {
 fn run_service_scripts(action: String, service_names: &[String]) -> Result<()> {
     let _ = check_services_or_err(service_names)
 	.with_context(|| format!("Missing service file"))?;
-    
-    service_names.par_iter()
-	.for_each(|name| {
-	    let output = Command::new("sudo systemctl")
-		.args(&[action.clone(), format!("{}.service", name)])
-		.output()
-		.with_context(|| format!("Failed to {} the {} script!", action, name));
-	    println!("{:?}", output.unwrap().stdout);
-	});
+
+    for service_name in service_names {
+	let mut cmd: &mut Command = &mut Command::new("sudo");
+	cmd = cmd.arg("systemctl");
+	
+	if action == "interrupt" {
+	    cmd = cmd.args(&["kill", "-s", "SIGINT", &service_name.clone()]);
+	} else {
+	    cmd = cmd.args(&[action.clone(), service_name.clone()]);
+	}
+	
+	let _ = cmd
+	    .output()
+	    .with_context(|| format!("Failed to {} the {} script!", action, service_name))?;
+    }
+
     Ok(())
 }
 
