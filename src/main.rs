@@ -62,9 +62,10 @@ fn check_service_file(filename: String) -> Option<String> {
 	.with_context(|| format!("Failed to read {}", service_dir))
 	.unwrap();
     for path in paths {
-	let name = path.unwrap().path();
-	if name == PathBuf::from(filename.clone()) {
-	    return Some(name.to_str().unwrap().to_string());
+	if let Some(file_name) = path.unwrap().path().file_name() {
+	    if file_name == PathBuf::from(filename.clone()) {
+		return Some(file_name.to_str().unwrap().to_string());
+	    }
 	}
     }
     None
