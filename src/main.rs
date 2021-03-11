@@ -19,9 +19,13 @@ use anyhow::{
 #[derive(StructOpt)]
 #[structopt(rename_all = "kebab-case")]
 enum Cmd {
+    /// Call `sudo systemctl start <service>`.
     Start,
+    /// Call `sudo systemctl stop <service>`.
     Stop,
+    /// Call `sudo systemctl status <service>`.
     Status,
+    /// List available systemd unit files in `/etc/systemd/system`.
     List,
 }
 

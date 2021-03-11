@@ -2,6 +2,32 @@
 
 A tool for starting, stopping, and debugging systemd services for Cardano node.
 
+```bash
+
+cardano-systemd 0.1.0
+Pancy <pan@xerberus.net>
+Tool for managing systemd services for Cardano node
+
+USAGE:
+    cardano-systemd [FLAGS] [OPTIONS] <SUBCOMMAND>
+
+FLAGS:
+    -a, --all        Specify all services
+    -h, --help       Prints help information
+    -V, --version    Prints version information
+
+OPTIONS:
+    -s, --service <service>    Specific a service [default: all]
+
+SUBCOMMANDS:
+    help      Prints this message or the help of the given subcommand(s)
+    list      List available systemd unit files in `/etc/systemd/system`
+    start     Call `sudo systemctl start <service>`
+    status    Call `sudo systemctl status <service>`
+    stop      Call `sudo systemctl stop <service>`
+	
+```
+
 ## Executables
 
 You need the executables in the `PATH` (in SELinux like Amazon Linux 2 they should be placed in `/usr/local/sbin`).
@@ -52,7 +78,9 @@ node_exporter
 
 # Systemd Unit Files
 
-Service files should be placed in `/etc/systemd/system` with strict names:
+Service files should be placed in `/etc/systemd/system` with the following names. Here are some examples which you can further configure to your preference.
+
+`cardano-systemd list` will show if these unit files are in place.
 
 ```systemd
 
