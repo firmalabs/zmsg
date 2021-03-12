@@ -13,5 +13,7 @@ name = "cardano-systemd"
 console = "0.14"
 anyhow = "1.0"
 structopt = "0.3"
-rayon = "1.5"
+pest = "2.0"
+pest_derive = "2.0"
+
 

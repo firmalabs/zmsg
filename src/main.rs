@@ -1,5 +1,11 @@
 #![allow(unused)]
 
+extern crate pest;
+#[macro_use]
+extern crate pest_derive;
+
+mod systemd;
+
 use std::{
     fs,
     path::PathBuf,
@@ -7,9 +13,10 @@ use std::{
     process::Command,
 };
 
+use systemd::parser;
+
 use structopt::StructOpt;
-use rayon::prelude::*;
-use console::Term;
+use console::{Term, Style};
 use anyhow::{
     anyhow,
     Context, Result,
@@ -169,4 +176,6 @@ fn main() -> Result<()> {
 
     Ok(())
 }
+
+
 
