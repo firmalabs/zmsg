@@ -1,9 +1,5 @@
 #![allow(unused)]
 
-extern crate pest;
-#[macro_use]
-extern crate pest_derive;
-
 mod systemd;
 
 use std::{
@@ -13,14 +9,13 @@ use std::{
     process::Command,
 };
 
-use systemd::parser;
-
 use structopt::StructOpt;
 use console::{Term, Style};
 use anyhow::{
     anyhow,
     Context, Result,
 };
+use systemd_parser;
 
 
 #[derive(StructOpt)]
@@ -63,7 +58,7 @@ struct Cli {
     all: bool,
 
     #[structopt(short, long, default_value = "all", global = true)]
-    /// Specific a service 
+    /// Specify a service 
     service: String,
 
     #[structopt(subcommand)]
@@ -176,6 +171,4 @@ fn main() -> Result<()> {
 
     Ok(())
 }
-
-
 

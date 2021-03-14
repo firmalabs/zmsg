@@ -13,8 +13,5 @@ name = "cardano-systemd"
 console = "0.14"
 anyhow = "1.0"
 structopt = "0.3"
-pest = "2.0"
-pest_derive = "2.0"
 systemd-parser = { git = "https://github.com/xerberus-pool/systemd-parser.git" }
-
 
