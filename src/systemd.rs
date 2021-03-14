@@ -2,6 +2,7 @@ use std::fs;
 use std::path::PathBuf;
 use std::process::Command;
 use anyhow::{anyhow, Context, Result};
+use systemd_parser;
 
 pub fn check_daemon_path(path: PathBuf) -> Result<String> {
     let mut file_name = "";
@@ -26,6 +27,27 @@ pub fn check_daemon_path(path: PathBuf) -> Result<String> {
 	}
     }
     Err(anyhow!("cannot file the daemon file"))
+}
+
+pub fn check_exec_start(filename: &str) -> Result<String> {
+    if let Ok(u) = systemd_parser::parse(filename) {
+	if let Some(s) = u.get(&"Service".to_string()) {
+	    if let Some(path) = s.get(&"ExecStart".to_string()) {
+		match path {
+		    systemd_parser::SystemdValue::Str(p) => {
+			check_daemon_path(PathBuf::from(&p))
+		    },
+		    _ => Err(anyhow!("multiple ExecStart key")),
+		}
+	    } else {
+		return Err(anyhow!("fail to parse ExecStart in file {}", filename));
+	    }
+	} else {
+	    return Err(anyhow!("fail to parse Service in file {}", filename));
+	}
+    } else {
+	Err(anyhow!("fail to parse service file {}", filename))
+    }
 }
 
 pub fn check_service_file(filename: String) -> Option<String> {

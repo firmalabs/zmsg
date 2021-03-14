@@ -7,6 +7,7 @@ use systemd::{
     check_services_or_err,
     run_service_scripts,
     check_service_file,
+    check_exec_start,
 };
 use std::{
     fs,
@@ -34,20 +35,33 @@ fn main() -> Result<()> {
     let action = cmd.to_string();
 
     if action == "list" {
+	let mut msg = format!(
+	    "\n|{:^30}|{:^15}|{:^15}|\n|{:=^30}|{:=^15}|{:=^15}|",
+            "Service", "Unit File", "ExecStart",
+            "","","",
+	);
 	services.iter().for_each(|name| {
 	    let filename = format!("{}.service", name);
-	    let mut exist = false;
+	    let mut service_exist = false;
+	    let mut daemon_exist = false;
 	    let no = "✕";
 	    let ok = "✓";
 	    if let Some(_) = check_service_file(filename.clone()) {
-		exist = true;
+		service_exist = true;
 	    }
-	    let msg = format!(
-		"{} ... {}",
+	    if let Ok(_) = check_exec_start(filename.as_str()) {
+		daemon_exist = true;
+	    }
+	    let row = format!(
+		"\n|{:^30}|{:^15}|{:^15}|",
 		filename,
-		if exist { ok } else { no });
-	    term.write_line(&msg.as_str());
+		if service_exist { ok } else { no },
+		if daemon_exist { ok } else { no },
+	    );
+	    msg += &row;
 	});
+	msg += "\n";
+	term.write_line(&msg.as_str());
 	return Ok(());
     }
     
