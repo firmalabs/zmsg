@@ -4,6 +4,8 @@ use std::process::Command;
 use anyhow::{anyhow, Context, Result};
 use systemd_parser;
 
+const DEFAULT_SYSTEMD_DIR: &str = "/etc/systemd/system/";
+
 #[cfg(test)]
 mod test {
     use super::*;
@@ -25,7 +27,9 @@ fn file_exists(path: &str) -> bool {
 }
 
 pub fn check_exec_start(filename: &str) -> Result<String> {
-    if let Ok(u) = systemd_parser::parse(filename) {
+    let service_file = Path::new(DEFAULT_SYSTEMD_DIR).join(filename);
+    let filepath = service_file.to_str().unwrap();
+    if let Ok(u) = systemd_parser::parse(filepath) {
 	if let Some(s) = u.get(&"Service".to_string()) {
 	    if let Some(path) = s.get(&"ExecStart".to_string()) {
 		match path {
@@ -50,9 +54,8 @@ pub fn check_exec_start(filename: &str) -> Result<String> {
 }
 
 pub fn check_service_file(filename: String) -> Option<String> {
-    let service_dir = "/etc/systemd/system/";
-    let paths = fs::read_dir(service_dir)
-	.with_context(|| format!("Failed to read {}", service_dir))
+    let paths = fs::read_dir(DEFAULT_SYSTEMD_DIR)
+	.with_context(|| format!("Failed to read {}", DEFAULT_SYSTEMD_DIR))
 	.unwrap();
     for path in paths {
 	if let Some(file_name) = path.unwrap().path().file_name() {
