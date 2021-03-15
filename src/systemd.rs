@@ -1,32 +1,27 @@
 use std::fs;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::process::Command;
 use anyhow::{anyhow, Context, Result};
 use systemd_parser;
 
-pub fn check_daemon_path(path: PathBuf) -> Result<String> {
-    let mut file_name = "";
-    if let Some(f) = path.file_name().unwrap().to_str() {
-	file_name = f;
+#[cfg(test)]
+mod test {
+    use super::*;
+    use std::env::current_dir;
+    
+    #[test]
+    fn test_file_exists() {
+	let path = current_dir().unwrap().join("unit_files/cardano-node.service");
+	let noop = current_dir().unwrap().join("noop/noop.sh");
+	let path_str = path.to_str().unwrap();
+	let noop_str = noop.to_str().unwrap();
+	assert!(file_exists(path_str));
+	assert!(!file_exists(noop_str));
     }
-    if let Some(dir_path) = path.parent() {
-	if let Some(path) = dir_path.to_str() {
-	    let paths = fs::read_dir(path)
-		.with_context(|| {
-		    format!("failed to read {}", path)
-		})?;
-	    for path in paths {
-		if let Some(fname) = path.unwrap().path().file_name() {
-		    if fname == file_name {
-			if let Ok(name) = fname.to_os_string().into_string() {
-			    return Ok(name);
-			}
-		    }
-		}
-	    }
-	}
-    }
-    Err(anyhow!("cannot file the daemon file"))
+}
+
+fn file_exists(path: &str) -> bool {
+    Path::new(path).exists()
 }
 
 pub fn check_exec_start(filename: &str) -> Result<String> {
@@ -35,7 +30,11 @@ pub fn check_exec_start(filename: &str) -> Result<String> {
 	    if let Some(path) = s.get(&"ExecStart".to_string()) {
 		match path {
 		    systemd_parser::SystemdValue::Str(p) => {
-			check_daemon_path(PathBuf::from(&p))
+			if file_exists(&p) {
+			    Ok(p.to_string()) 
+			} else {
+			    Err(anyhow!("file does not exist"))
+			}
 		    },
 		    _ => Err(anyhow!("multiple ExecStart key")),
 		}
