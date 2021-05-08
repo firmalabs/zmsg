@@ -1,13 +1,13 @@
 [package]
-name = "cardano-systemd"
+name = "zmsg"
 version = "0.1.0"
-authors = ["Pancy <pancy@xerberus.net>"]
+authors = ["Pancy <pancy@firma.org>"]
 edition = "2018"
 
 [[bin]]
 bench = false
 path = "src/main.rs"
-name = "cardano-systemd"
+name = "zmsg"
 
 [dependencies]
 console = "0.14"
