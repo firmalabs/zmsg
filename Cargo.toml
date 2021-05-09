@@ -13,5 +13,7 @@ name = "zmsg"
 console = "0.14"
 anyhow = "1.0"
 structopt = "0.3"
-systemd-parser = { git = "https://github.com/xerberus-pool/systemd-parser.git" }
+hex = "0.4.3"
+#rustc-serialize = "0.3"
+
 
