@@ -2,6 +2,7 @@
 
 mod app;
 mod hex;
+mod auth;
 
 use app::{Cmd, Cli};
 use std::{
@@ -18,9 +19,6 @@ use anyhow::{anyhow, Context, Result};
 fn main() -> Result<()> {
     let mut cli = Cli::from_args();
     let term = Term::stdout();
-    
-    // let Cli{ cmd } = cli;
-    // let action = cmd.to_string();
 
     let Cli{ cmd } = cli;
     match cmd {

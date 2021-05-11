@@ -26,8 +26,6 @@ mod tests {
     fn test_str_to_hex() {
         let mut result = str_to_hex("hello, world!");
         if let Ok(s) = result {
-            println!("{}", s);
-            println!("{}", s.len());
             assert!(s.len() > 0);
         } else {
             assert!(false);
