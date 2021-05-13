@@ -7,23 +7,6 @@ use serde::{Serialize, Deserialize, de::DeserializeOwned};
 use url::{Url, ParseError};
 use serde_json::{self, json};
 
-pub struct ZClient {
-    c: Client,
-    pub url: String,
-    pub user: String,
-    pub password: Option<String>,
-}
-
-impl Default for ZClient {
-    fn default() -> Self {
-        Self {
-            c: Client::default(),
-            url: "http://127.0.0.1:9999".to_string(),
-            user: String::new(),
-            password: None,
-        }
-    }
-}
 
 pub struct ZClientBuilder {
     client: ZClient,
@@ -69,6 +52,39 @@ pub struct ZRequest<T> {
     params: Vec<T>,
 }
 
+pub struct ZRequestBuilder<T> {
+    request: ZRequest<T>,
+}
+
+impl<T> Default for ZRequestBuilder<T> {
+    fn default() -> Self {
+        Self {
+            request: ZRequest::default(),
+        }
+    }
+}
+
+impl<T> ZRequestBuilder<T> {
+    pub fn jsonrpc(mut self, version: String) -> Self {
+        self.request.jsonrpc = version;
+        self
+    }
+
+    pub fn method(mut self, method: String) -> Self {
+        self.request.method = method;
+        self
+    }
+
+    pub fn params(mut self, params: Vec<T>) -> Self {
+        self.request.params = params;
+        self
+    }
+
+    pub fn build(self) -> ZRequest<T> {
+        self.request
+    }
+}
+
 impl<T> Default for ZRequest<T> {
     fn default() -> Self {
         Self {
@@ -79,12 +95,36 @@ impl<T> Default for ZRequest<T> {
     }
 }
 
+impl<T> ZRequest<T> {
+    pub fn builder() -> ZRequestBuilder<T> {
+        ZRequestBuilder::<T>::default()
+    }
+}
+
+pub struct ZClient {
+    c: Client,
+    pub url: String,
+    pub user: String,
+    pub password: Option<String>,
+}
+
+impl Default for ZClient {
+    fn default() -> Self {
+        Self {
+            c: Client::default(),
+            url: "http://127.0.0.1:9999".to_string(),
+            user: String::new(),
+            password: None,
+        }
+    }
+}
+
 impl ZClient {
     pub fn builder() -> ZClientBuilder {
         ZClientBuilder::default()
     }
 
-    pub fn send<S, T>(&self, req: ZRequest<S>) -> Result<ZResponse<T>, Error> 
+    fn send<S, T>(&self, req: ZRequest<S>) -> Result<ZResponse<T>, Error> 
     where S: Serialize + 'static, T: DeserializeOwned + 'static {
         let res = self.c.post(self.url.clone())
             .basic_auth(self.user.clone(), self.password.clone())
@@ -94,13 +134,15 @@ impl ZClient {
             .json::<ZResponse<T>>()?;
         Ok(res)
     }
+    
+    /* Zcash RPC API implementation */
 
     pub fn getbalance(&self) -> Result<f32, Error> {
-        let res: ZResponse<f32> = self.send::<String, f32>(ZRequest {
-            jsonrpc: "1.0".to_string(),
-            method: "getbalance".to_string(),
-            params: vec![],
-        })?;
+        let req = ZRequest::<String>::builder()
+            .method("getbalance".to_string())
+            .build();
+            
+        let res: ZResponse<f32> = self.send::<String, f32>(req)?;
         Ok(res.result)
     }
 
