@@ -3,6 +3,7 @@
 mod app;
 mod hex;
 mod auth;
+mod rpc;
 
 use app::{Cmd, Cli};
 use std::{
@@ -16,7 +17,7 @@ use structopt::StructOpt;
 use console::{Term, Style};
 use anyhow::{anyhow, Context, Result};
 
-fn main() -> Result<()> {
+async fn main() -> Result<()> {
     let mut cli = Cli::from_args();
     let term = Term::stdout();
 
