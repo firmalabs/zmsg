@@ -62,6 +62,13 @@ pub struct BalanceResponse {
     id: Option<i32>,
 }
 
+#[derive(Deserialize)]
+pub struct ListAddressesResponse {
+    result: Vec<String>,
+    error: Option<String>,
+    id: Option<i32>,
+}
+
 impl ZClient {
     pub fn builder() -> ZClientBuilder {
         ZClientBuilder::default()
@@ -74,6 +81,16 @@ impl ZClient {
             .body("{\"jsonrpc\": \"1.0\", \"method\": \"getbalance\", \"params\": []}")
             .send()?
             .json::<BalanceResponse>()?;
+        Ok(res.result)
+    }
+
+    pub fn z_listaddresses(&self) -> Result<Vec<String>, Error> {
+        let res = self.c.get(self.url.clone())
+            .basic_auth(self.user.clone(), self.password.clone())
+            .header(CONTENT_TYPE, "text/octet-stream")
+            .body("{\"jsonrpc\": \"1.0\", \"method\": \"z_listaddresses\", \"params\": []}")
+            .send()?
+            .json::<ListAddressesResponse>()?;
         Ok(res.result)
     }
 }
@@ -110,6 +127,37 @@ mod tests {
             .expect("Failed to build client");
 
         assert!(balance == 2.5);
+    }
+
+    #[test]
+    fn test_z_listaddresses() {
+        let server = MockServer::start();
+
+        let listaddresses_mock = server.mock(|when, then| {
+            when.method(GET)
+                .path("/z_listaddresses");
+            then.status(200)
+                .header("Content-Type", "application/json")
+                .body(json!({
+                    "result": vec!["z_addr1", "z_addr2", "z_addr3"],
+                    "error": Null,
+                    "id": Null,
+                }).to_string());
+        });
+
+        let addresses = ZClient::builder()
+            .with_url(server.url("/z_listaddresses"))
+            .expect("Failed to parse URL")
+            .with_auth("user".to_string(), Some("pass".to_string()))
+            .build()
+            .z_listaddresses()
+            .expect("Failed to build client");
+
+        assert!(addresses == vec![
+            "z_addr1".to_string(), 
+            "z_addr2".to_string(), 
+            "z_addr3".to_string(),
+        ]);
     }
 }
 
