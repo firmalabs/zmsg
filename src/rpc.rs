@@ -3,9 +3,9 @@ use std::str;
 use anyhow::{anyhow, Error};
 use reqwest::blocking::Client;
 use reqwest::header::CONTENT_TYPE;
-use serde::{Deserialize};
+use serde::{Serialize, Deserialize, de::DeserializeOwned};
 use url::{Url, ParseError};
-
+use serde_json::{self, json};
 
 pub struct ZClient {
     c: Client,
@@ -55,11 +55,28 @@ impl ZClientBuilder {
     }
 }
 
-#[derive(Deserialize)]
+#[derive(Debug, Deserialize)]
 pub struct ZResponse<T> {
     result: T,
     error: Option<String>,
     id: Option<i32>,
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct ZRequest<T> {
+    jsonrpc: String,
+    method: String,
+    params: Vec<T>,
+}
+
+impl<T> Default for ZRequest<T> {
+    fn default() -> Self {
+        Self {
+            jsonrpc: "1.0".to_string(),
+            method: "getbalance".to_string(),
+            params: vec![],
+        }
+    }
 }
 
 impl ZClient {
@@ -67,23 +84,32 @@ impl ZClient {
         ZClientBuilder::default()
     }
 
-    pub fn getbalance(&self) -> Result<f32, Error> {
-        let res = self.c.get(self.url.clone())
+    pub fn send<S, T>(&self, req: ZRequest<S>) -> Result<ZResponse<T>, Error> 
+    where S: Serialize + 'static, T: DeserializeOwned + 'static {
+        let res = self.c.post(self.url.clone())
             .basic_auth(self.user.clone(), self.password.clone())
             .header(CONTENT_TYPE, "text/octet-stream")
-            .body("{\"jsonrpc\": \"1.0\", \"method\": \"getbalance\", \"params\": []}")
+            .body(json!(req).to_string())
             .send()?
-            .json::<ZResponse<f32>>()?;
+            .json::<ZResponse<T>>()?;
+        Ok(res)
+    }
+
+    pub fn getbalance(&self) -> Result<f32, Error> {
+        let res: ZResponse<f32> = self.send::<String, f32>(ZRequest {
+            jsonrpc: "1.0".to_string(),
+            method: "getbalance".to_string(),
+            params: vec![],
+        })?;
         Ok(res.result)
     }
 
     pub fn z_listaddresses(&self) -> Result<Vec<String>, Error> {
-        let res = self.c.get(self.url.clone())
-            .basic_auth(self.user.clone(), self.password.clone())
-            .header(CONTENT_TYPE, "text/octet-stream")
-            .body("{\"jsonrpc\": \"1.0\", \"method\": \"z_listaddresses\", \"params\": []}")
-            .send()?
-            .json::<ZResponse<Vec<String>>>()?;
+        let res: ZResponse<Vec<String>> = self.send::<String, Vec<String>>(ZRequest {
+            jsonrpc: "1.0".to_string(),
+            method: "z_listaddresses".to_string(),
+            params: vec![],
+        })?;
         Ok(res.result)
     }
 }
@@ -92,7 +118,7 @@ impl ZClient {
 mod tests {
     use super::*;
     use httpmock::MockServer;
-    use httpmock::Method::GET;
+    use httpmock::Method::POST;
     use serde_json::{json, Value::Null};
     
     #[test]
@@ -100,7 +126,7 @@ mod tests {
         let server = MockServer::start();
 
         let getbalance_mock = server.mock(|when, then| {
-            when.method(GET)
+            when.method(POST)
                 .path("/getbalance");
             then.status(200)
                 .header("Content-Type", "application/json")
@@ -127,7 +153,7 @@ mod tests {
         let server = MockServer::start();
 
         let listaddresses_mock = server.mock(|when, then| {
-            when.method(GET)
+            when.method(POST)
                 .path("/z_listaddresses");
             then.status(200)
                 .header("Content-Type", "application/json")
