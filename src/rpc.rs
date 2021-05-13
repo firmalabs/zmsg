@@ -56,15 +56,8 @@ impl ZClientBuilder {
 }
 
 #[derive(Deserialize)]
-pub struct BalanceResponse {
-    result: f32,
-    error: Option<String>,
-    id: Option<i32>,
-}
-
-#[derive(Deserialize)]
-pub struct ListAddressesResponse {
-    result: Vec<String>,
+pub struct ZResponse<T> {
+    result: T,
     error: Option<String>,
     id: Option<i32>,
 }
@@ -80,7 +73,7 @@ impl ZClient {
             .header(CONTENT_TYPE, "text/octet-stream")
             .body("{\"jsonrpc\": \"1.0\", \"method\": \"getbalance\", \"params\": []}")
             .send()?
-            .json::<BalanceResponse>()?;
+            .json::<ZResponse<f32>>()?;
         Ok(res.result)
     }
 
@@ -90,7 +83,7 @@ impl ZClient {
             .header(CONTENT_TYPE, "text/octet-stream")
             .body("{\"jsonrpc\": \"1.0\", \"method\": \"z_listaddresses\", \"params\": []}")
             .send()?
-            .json::<ListAddressesResponse>()?;
+            .json::<ZResponse<Vec<String>>>()?;
         Ok(res.result)
     }
 }
