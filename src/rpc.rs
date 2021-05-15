@@ -58,6 +58,10 @@ pub struct Tx {
     blockheight: usize,
     blockindex: usize,
     blocktime: usize,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    jsindex: Option<usize>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    jsoutindex: Option<usize>,
     change: bool,
 }
 
@@ -135,7 +139,7 @@ impl Default for ZClient {
     }
 }
 
-impl<'a> ZClient {
+impl ZClient {
     pub fn builder() -> ZClientBuilder {
         ZClientBuilder::default()
     }
@@ -170,13 +174,17 @@ impl<'a> ZClient {
         Ok(res.result)
     }
 
-    pub fn z_listreceivedbyaddress(&self, z_addr: &str) -> Result<Vec<Tx>, Error> {
+    pub fn z_listreceivedbyaddress(&self, addr: &str) -> Result<Vec<Tx>, Error> {
         let req = ZRequest::<String>::builder()
             .method("z_listreceivedbyaddress".to_string())
-            .params(vec![z_addr.to_owned()])
+            .params(vec![addr.to_owned()])
             .build();
         let res: ZResponse<Vec<Tx>> = self.send::<String, Vec<Tx>>(req)?;
         Ok(res.result)
+    }
+
+    pub fn z_sendmany(&self, sender_addr: &str, receiver_addr: &str, amount: f32) -> Result<String, Error> {
+        unimplemented!();
     }
 }
 
@@ -259,6 +267,8 @@ mod tests {
             blockindex: 1,
             blocktime: 1620543097,
             change: false,
+            jsindex: None,
+            jsoutindex: None,
         };
 
         let server = MockServer::start();
