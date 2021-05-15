@@ -163,11 +163,10 @@ impl<'a> ZClient {
     }
 
     pub fn z_listaddresses(&self) -> Result<Vec<String>, Error> {
-        let res: ZResponse<Vec<String>> = self.send::<String, Vec<String>>(ZRequest {
-            jsonrpc: "1.0".to_string(),
-            method: "z_listaddresses".to_string(),
-            params: vec![],
-        })?;
+        let req = ZRequest::<String>::builder()
+            .method("z_listaddresses".to_string())
+            .build();
+        let res: ZResponse<Vec<String>> = self.send::<String, Vec<String>>(req)?;
         Ok(res.result)
     }
 
