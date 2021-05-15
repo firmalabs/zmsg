@@ -45,6 +45,22 @@ pub struct ZResponse<T> {
     id: Option<i32>,
 }
 
+// FIXME: Manually implement PartialEq for testing.
+#[derive(Debug, Serialize, Deserialize, PartialEq)]
+#[serde(rename_all = "camelCase")]
+pub struct Tx {
+    txid: String,
+    amount: f32,
+    amount_zat: usize,
+    memo: String,
+    outindex: usize,
+    confirmations: usize,
+    blockheight: usize,
+    blockindex: usize,
+    blocktime: usize,
+    change: bool,
+}
+
 #[derive(Serialize, Deserialize)]
 pub struct ZRequest<T> {
     jsonrpc: String,
@@ -119,7 +135,7 @@ impl Default for ZClient {
     }
 }
 
-impl ZClient {
+impl<'a> ZClient {
     pub fn builder() -> ZClientBuilder {
         ZClientBuilder::default()
     }
@@ -154,10 +170,20 @@ impl ZClient {
         })?;
         Ok(res.result)
     }
+
+    pub fn z_listreceivedbyaddress(&self, z_addr: &str) -> Result<Vec<Tx>, Error> {
+        let req = ZRequest::<String>::builder()
+            .method("z_listreceivedbyaddress".to_string())
+            .params(vec![z_addr.to_owned()])
+            .build();
+        let res: ZResponse<Vec<Tx>> = self.send::<String, Vec<Tx>>(req)?;
+        Ok(res.result)
+    }
 }
 
 #[cfg(test)]
 mod tests {
+    use crate::hex::*;
     use super::*;
     use httpmock::MockServer;
     use httpmock::Method::POST;
@@ -219,6 +245,49 @@ mod tests {
             "z_addr2".to_string(), 
             "z_addr3".to_string(),
         ]);
+    }
+
+    #[test]
+    fn test_z_listreceivedbyaddress() {
+        let expected = Tx{
+            txid: "90ac85f44c412b43db85d2c52e1ccafeea6385661f4b58cb8dd372cac73d1978".to_owned(),
+            amount: 0.01,
+            amount_zat: 1000000,
+            memo: "68656c6c6f207a63617368000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000".to_owned(),
+            outindex: 0,
+            confirmations: 7651,
+            blockheight: 1400579,
+            blockindex: 1,
+            blocktime: 1620543097,
+            change: false,
+        };
+
+        let server = MockServer::start();
+        let mock = server.mock(|when, then| {
+            when.method(POST)
+                .path("/");
+            then.status(200)
+                .header("Content-Type", "application/json")
+                .body(json!({
+                    "result": vec![
+                        json!(expected)
+                    ],
+                    "error": Null,
+                    "id": Null
+                }).to_string());
+        });
+
+        let txs: Vec<Tx> = ZClient::builder()
+            .with_url(server.url("/"))
+            .expect("Failed to parse URL")
+            .with_auth("user".to_string(), Some("pass".to_string()))
+            .build()
+            .z_listreceivedbyaddress("some_random_hex_string")
+            .expect("Failed to build client");
+        
+        let result = &txs[0];
+        assert!(result == &expected);
+        assert!(hex_to_string(&result.memo).unwrap().starts_with("hello zcash"));
     }
 }
 
