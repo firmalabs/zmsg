@@ -17,6 +17,8 @@ use structopt::StructOpt;
 use console::{Term, Style};
 use anyhow::{anyhow, Context, Result, Error};
 
+const DEFAULT_AMOUNT: f32 = 0.0001;
+
 fn main() -> Result<(), Error> {
     let mut cli = Cli::from_args();
     let term = Term::stdout();
@@ -30,9 +32,9 @@ fn main() -> Result<(), Error> {
         
     match cmd {
         Cmd::Sendmsg{ to, msg, .. } => {
-            let warn = format!("Sending {} to {}", msg, to);
-	    term.write_line(&warn.as_str());
-            let opid = send_msg_to(to, msg, None)?;
+            let opid = send_msg_to(&rpc_client, &to, &msg, None)?;
+            let notify = format!("Message sent to {} with opid = {}", to, opid);
+	    term.write_line(&notify);
         },
 
         Cmd::Zaddr{ all } => {
@@ -52,7 +54,9 @@ fn main() -> Result<(), Error> {
     Ok(())
 }
 
-fn send_msg_to(to: String, msg: String, amount: Option<f32>) -> Result<String, Error> {
-    unimplemented!();
+fn send_msg_to(c: &rpc::ZClient, to: &str, msg: &str, amount: Option<f32>) -> Result<String, Error> {
+    let my_addr = c.z_listaddresses()?[0].clone();
+    let opid = c.z_sendmany(&my_addr, to, amount.unwrap_or(DEFAULT_AMOUNT), hex::str_to_hex(msg)?)?;
+    Ok(opid)
 }
 

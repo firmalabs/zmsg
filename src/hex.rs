@@ -1,21 +1,22 @@
 use hex::{ToHex, FromHex};
 use std::str;
+use anyhow::{anyhow, Error};
 
 /// Convert a unicode string to a hexadecimal string.
-pub fn str_to_hex(s: &str) -> Result<String, &str> {    
+pub fn str_to_hex(s: &str) -> Result<String, Error> {    
     let bmsg = s.as_bytes();
     if bmsg.len() > 512 {
-        return Err("Message exceeds 512 bytes!");
+        return Err(anyhow!("Message exceeds 512 bytes!"));
     }
     Ok(hex::encode(s))
 }
 
 /// Convert a hexadecimal string to the corresponding unicode string.
-pub fn hex_to_string(s: &str) -> Result<String, &str> {
+pub fn hex_to_string(s: &str) -> Result<String, Error> {
     if let Ok(v) = hex::decode(s) {
         return Ok(str::from_utf8(&v).unwrap().to_owned());
     }
-    Err("Fail to convert hex string to unicode string")
+    Err(anyhow!("Fail to convert hex string to unicode string"))
 }
 
 #[cfg(test)]
