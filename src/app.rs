@@ -1,7 +1,7 @@
 use structopt::StructOpt;
 
 #[derive(StructOpt)]
-#[structopt(rename_all = "kebab-case")]
+#[structopt(rename_all = "snake_case")]
 pub enum Cmd {
     /// Send a 512-byte encrypted memo to a target z_address
     Sendmsg {
@@ -9,12 +9,19 @@ pub enum Cmd {
         /// a z_address of the recipient
         to: String,
     },
+    /// Get my available shielded address(es)
+    Zaddr {
+        #[structopt(short, long)]
+        /// a z_address of the recipient
+        all: bool,
+    },
 }
 
 impl ToString for Cmd {
     fn to_string(&self) -> String {
 	match self {
             Self::Sendmsg{ .. } => String::from("sendmsg"),
+            Self::Zaddr{ .. } => String::from("zaddr"),
 	}
     }
 }
