@@ -29,9 +29,10 @@ fn main() -> Result<(), Error> {
         .build();
         
     match cmd {
-        Cmd::Sendmsg{ to } => {
-            let msg = format!("Sending msg to {}", to);
-	    term.write_line(&msg.as_str());
+        Cmd::Sendmsg{ to, msg, .. } => {
+            let warn = format!("Sending {} to {}", msg, to);
+	    term.write_line(&warn.as_str());
+            let opid = send_msg_to(to, msg, None)?;
         },
 
         Cmd::Zaddr{ all } => {
@@ -49,5 +50,9 @@ fn main() -> Result<(), Error> {
     }
 
     Ok(())
+}
+
+fn send_msg_to(to: String, msg: String, amount: Option<f32>) -> Result<String, Error> {
+    unimplemented!();
 }
 

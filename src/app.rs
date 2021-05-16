@@ -4,10 +4,16 @@ use structopt::StructOpt;
 #[structopt(rename_all = "snake_case")]
 pub enum Cmd {
     /// Send a 512-byte encrypted memo to a target z_address
+    /// with a default spare ZEC of 0.0001 ZEC
     Sendmsg {
-        #[structopt(short = "to", long)]
+        #[structopt(long)]
         /// a z_address of the recipient
         to: String,
+        /// 512-byte max ASCII or Unicode message
+        msg: String,
+        /// Optional ZEC amount to be sent with the message
+        #[structopt(long)]
+        txval: Option<f32>,
     },
     /// Get my available shielded address(es)
     Zaddr {
