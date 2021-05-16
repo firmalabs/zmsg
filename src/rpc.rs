@@ -110,7 +110,7 @@ impl<T> Default for ZRequest<T> {
         Self {
             jsonrpc: "1.0".to_string(),
             method: "getbalance".to_string(),
-            params: vec![],
+            params: Vec::<T>::new(),
         }
     }
 }
@@ -214,15 +214,19 @@ mod tests {
     use super::*;
     use httpmock::MockServer;
     use httpmock::Method::POST;
-    use serde_json::{json, Value::Null};
+    use serde_json::{self, json, Value::Null};
     
     #[test]
     fn test_getbalance() {
         let server = MockServer::start();
-
         let getbalance_mock = server.mock(|when, then| {
             when.method(POST)
-                .path("/getbalance");
+                .path("/getbalance")
+                .body(json!({
+                    "jsonrpc": "1.0", 
+                    "method": "getbalance", 
+                    "params": serde_json::Value::Array(vec![])
+                }).to_string());
             then.status(200)
                 .header("Content-Type", "application/json")
                 .body(json!({
@@ -249,7 +253,12 @@ mod tests {
 
         let listaddresses_mock = server.mock(|when, then| {
             when.method(POST)
-                .path("/z_listaddresses");
+                .path("/z_listaddresses")
+                .body(json!({
+                    "jsonrpc": "1.0", 
+                    "method": "z_listaddresses", 
+                    "params": serde_json::Value::Array(vec![])
+                }).to_string());
             then.status(200)
                 .header("Content-Type", "application/json")
                 .body(json!({
@@ -294,7 +303,12 @@ mod tests {
         let server = MockServer::start();
         let mock = server.mock(|when, then| {
             when.method(POST)
-                .path("/");
+                .path("/")
+                .body(json!({
+                    "jsonrpc": "1.0", 
+                    "method": "z_listreceivedbyaddress", 
+                    "params": vec!["z_addr"]
+                }).to_string());
             then.status(200)
                 .header("Content-Type", "application/json")
                 .body(json!({
@@ -311,7 +325,7 @@ mod tests {
             .expect("Failed to parse URL")
             .with_auth("user".to_string(), Some("pass".to_string()))
             .build()
-            .z_listreceivedbyaddress("some_random_hex_string")
+            .z_listreceivedbyaddress("z_addr")
             .expect("Failed to build client");
         
         let result = &txs[0];
@@ -322,10 +336,31 @@ mod tests {
     #[test]
     fn test_z_sendmany() {
         let expected_opid = "opid-f757ae55-530b-4499-a1e2-12fd32c96a36";
+        let memo = "68656c6c6f207a63617368";
+        let amount: f32 = 2.99;
+        let sender = "sender_addr";
+        let recv = "recv_addr";
+
+        let data = json!({
+            "jsonrpc": "1.0", 
+            "method": "z_sendmany", 
+            "params": vec![
+                serde_json::Value::String(sender.to_string()),
+                serde_json::Value::Array(vec![
+                    serde_json::json!({
+                        "address": recv,
+                        "amount": amount,
+                        "memo": memo
+                    }),
+                ])
+            ]
+        }).to_string();
+
         let server = MockServer::start();
         let mock = server.mock(|when, then| {
             when.method(POST)
-                .path("/");
+                .path("/")
+                .body(data);
             then.status(200)
                 .header("Content-Type", "application/json")
                 .body(json!({
@@ -335,15 +370,14 @@ mod tests {
                 }).to_string());
         });
 
-        let memo = "68656c6c6f207a63617368".to_owned();
         let opid = ZClient::builder()
             .with_url(server.url("/"))
             .expect("Failed to parse URL")
             .with_auth("user".to_string(), Some("pass".to_string()))
             .build()
-            .z_sendmany("sender_addr", "receiver_addr", 2.99, memo)
+            .z_sendmany(sender, recv, amount, memo.to_string())
             .expect("Failed to build client");
-        
+
         assert!(opid == expected_opid);
     }
 }
