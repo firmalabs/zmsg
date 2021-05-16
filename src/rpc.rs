@@ -183,8 +183,28 @@ impl ZClient {
         Ok(res.result)
     }
 
-    pub fn z_sendmany(&self, sender_addr: &str, receiver_addr: &str, amount: f32) -> Result<String, Error> {
-        unimplemented!();
+    pub fn z_sendmany(
+        &self, 
+        sender_addr: &str,
+        receiver_addr: &str, 
+        amount: f32,
+        memo: String
+    ) -> Result<String, Error> {
+        let req = ZRequest::<serde_json::Value>::builder()
+            .method("z_sendmany".to_string())
+            .params(vec![
+                serde_json::Value::String(sender_addr.to_string()),
+                serde_json::Value::Array(vec![
+                    serde_json::json!({
+                        "address": receiver_addr,
+                        "amount": amount,
+                        "memo": memo
+                    }),
+                ])
+            ])
+            .build();
+        let res = self.send::<serde_json::Value, String>(req)?;
+        Ok(res.result)
     }
 }
 
@@ -297,6 +317,34 @@ mod tests {
         let result = &txs[0];
         assert!(result == &expected);
         assert!(hex_to_string(&result.memo).unwrap().starts_with("hello zcash"));
+    }
+
+    #[test]
+    fn test_z_sendmany() {
+        let expected_opid = "opid-f757ae55-530b-4499-a1e2-12fd32c96a36";
+        let server = MockServer::start();
+        let mock = server.mock(|when, then| {
+            when.method(POST)
+                .path("/");
+            then.status(200)
+                .header("Content-Type", "application/json")
+                .body(json!({
+                    "result": expected_opid,
+                    "error": Null,
+                    "id": Null,
+                }).to_string());
+        });
+
+        let memo = "68656c6c6f207a63617368".to_owned();
+        let opid = ZClient::builder()
+            .with_url(server.url("/"))
+            .expect("Failed to parse URL")
+            .with_auth("user".to_string(), Some("pass".to_string()))
+            .build()
+            .z_sendmany("sender_addr", "receiver_addr", 2.99, memo)
+            .expect("Failed to build client");
+        
+        assert!(opid == expected_opid);
     }
 }
 
