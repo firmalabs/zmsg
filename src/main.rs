@@ -17,7 +17,7 @@ use structopt::StructOpt;
 use console::{Term, Style};
 use anyhow::{anyhow, Context, Result};
 
-async fn main() -> Result<()> {
+fn main() -> Result<()> {
     let mut cli = Cli::from_args();
     let term = Term::stdout();
 
