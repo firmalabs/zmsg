@@ -231,13 +231,14 @@ impl ZClient {
         Ok(res.result)
     }
 
-    pub fn z_listreceivedbyaddress(&self, addr: &str) -> Result<Vec<Tx>, Error> {
+    pub fn z_listreceivedbyaddress(&self, addr: &str) -> Result<Vec<(Tx, String)>, Error> {
         let req = ZRequest::<String>::builder()
             .method("z_listreceivedbyaddress".to_string())
             .params(vec![addr.to_owned()])
             .build();
         let res: ZResponse<Vec<Tx>> = self.send::<String, Vec<Tx>>(req)?;
-        Ok(res.result)
+        let result_pairs = res.result.iter().map(|tx| (tx.clone(), addr.to_string())).collect::<Vec<_>>();
+        Ok(result_pairs)
     }
 
     pub fn gettransaction(&self, txid: &str) -> Result<WalletTx, Error> {
@@ -386,7 +387,7 @@ mod tests {
                 }).to_string());
         });
 
-        let txs: Vec<Tx> = ZClient::builder()
+        let txs: Vec<(Tx, String)> = ZClient::builder()
             .with_url(server.url("/"))
             .expect("Failed to parse URL")
             .with_auth("user".to_string(), Some("pass".to_string()))
@@ -394,9 +395,10 @@ mod tests {
             .z_listreceivedbyaddress("z_addr")
             .expect("Failed to build client");
         
-        let result = &txs[0];
-        assert!(result == &expected);
-        assert!(hex_to_string(&result.memo).unwrap().starts_with("hello zcash"));
+        let (tx, addr) = &txs[0];
+        assert!(tx == &expected);
+        assert!(addr == "z_addr");
+        assert!(hex_to_string(&tx.memo).unwrap().starts_with("hello zcash"));
     }
 
     #[test]

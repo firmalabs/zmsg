@@ -55,7 +55,7 @@ fn main() -> Result<(), Error> {
             let txs = rpc_client.z_listaddresses()?
                 .iter()
                 .flat_map(|addr| rpc_client.z_listreceivedbyaddress(&addr).unwrap())
-                .filter(|tx| !tx.change)
+                .filter(|(tx, _)| !tx.change)
                 .collect::<Vec<_>>();
 
             let num_msg = &txs.len();
@@ -65,10 +65,8 @@ fn main() -> Result<(), Error> {
             );
             term.write_line(&heading);
             
-            txs.iter().enumerate().for_each(|(i, tx)| {
+            txs.iter().enumerate().for_each(|(i, (tx, a))| {
                 let rpc::Tx{ txid, amount, memo, .. } = tx;
-
-
                 let wtx: rpc::WalletTx = rpc_client.gettransaction(txid).unwrap();
                 let dt: DateTime<Local> = Local.from_utc_datetime(
                     &NaiveDateTime::from_timestamp((wtx.time as u32).into(), 0)
@@ -82,7 +80,7 @@ fn main() -> Result<(), Error> {
                     "{:<2}Message #{} (val = {})\n",
                     "|", i, amount,
                 );
-                let line2 = &format!("{:<2}To:\n", "|");
+                let line2 = &format!("{:<2}To: {}\n", "|", a);
                 let line3 = &format!("{:<2}Date: {}\n", "|", formatted_dt);
                 let line4 = &format!("{:<2}\n", "|");
                 let line5 = &format!("{:<4}{}\n", "|", hex::hex_to_string(&memo).unwrap_or("".to_string()));

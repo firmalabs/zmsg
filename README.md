@@ -26,6 +26,36 @@ $ zmsg sendmsg --to=$TARGET_ZADDR "Hello zmsg! welcome to pretty secure messagin
 Message sent to zchfvC6iubfsAxaNrbM4kkGDSpwjafECjqQ1BZBFXtotXyXARz2NoYRVEyfLEKGCFRY7Xfj2Q3jFueoHHmQKb63C3zumYnU with opid = <operation id>
 ```
 
+### check
+
+Running `zmsg check` iterates through all available z_address and display transactions where `change == false`.
+
+```shell
+$ zmsg check
+
+==========================================================================================
+> Got 3 messages.
+==========================================================================================
+| Message #0 (val = 1)
+| To: ztestsapling13vnh6svpvtpgntphha7nsafchx7zhhzu0gnptkztvahtvyueujwha2gcf976vt609qd8xjkaqwf
+| Date: Sat May  8, 2021 at 23:48:02
+|
+|   Thanks for using zfaucet!
+==========================================================================================
+| Message #1 (val = 0.5)
+| To: ztestsapling1hcm5sjeeesrzzhahr9txasjkupu5u0ajstxljy97qytxx3y6qku3w8gyf6tnqjfpz9f9w9jd9eg
+| Date: Sat May 15, 2021 at 06:26:13
+|
+|   second payment
+==========================================================================================
+| Message #2 (val = 0.01)
+| To: ztestsapling1hcm5sjeeesrzzhahr9txasjkupu5u0ajstxljy97qytxx3y6qku3w8gyf6tnqjfpz9f9w9jd9eg
+| Date: Sat May  8, 2021 at 23:51:37
+|
+|   hello zcash
+==========================================================================================
+```
+
 Note that this will take about a minute to compute the zero-knowledge proof, and another few minutes before the transaction gets propagated and confirmed for the other side to see it.
 
 [rust]: https://rust-lang.org
