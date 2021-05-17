@@ -14,6 +14,7 @@ httpmock = "0.5"
 
 [dependencies]
 console = "0.14"
+chrono = "0.4"
 anyhow = "1.0"
 structopt = "0.3"
 hex = "0.4.3"

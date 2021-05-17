@@ -65,6 +65,63 @@ pub struct Tx {
     pub change: bool,
 }
 
+#[derive(Debug, Serialize, Deserialize, PartialEq, Clone)]
+#[serde(rename_all = "camelCase")]
+/// Detailed information abut in-wallet transaction <txid>.
+/// Result from "gettransaction" method.
+pub struct WalletTx {
+    pub status: String,
+    pub txid: String,
+    pub amount: f32,
+    amount_zat: usize,
+    confirmations: usize,
+    blockhash: String,
+    blockindex: usize,
+    blocktime: usize,
+    pub time: usize,
+    pub timereceived: usize,
+    hex: String,
+    details: Vec<serde_json::Value>,
+    vjoinsplit: Vec<serde_json::Value>,
+}
+
+impl WalletTx {
+    fn mock() -> Self {
+        WalletTx{
+            status: "mined".to_owned(),
+            txid: "foobarbaz".to_owned(),
+            amount: 99.999,
+            amount_zat: 99999999,
+            confirmations: 9,
+            blockhash: "9999999999999999999999".to_owned(),
+            blockindex: 99,
+            blocktime: 99999999,
+            time: 99999999,
+            timereceived: 99999999,
+            hex: "999999999999999999999999999999999999999999999999999".to_owned(),
+            details: vec![
+                json!({
+                    "account": "mocker",
+                    "categoy": "received",
+                    "amount": 99.999,
+                    "amount_zat": 99999999,
+                    "vout": 9
+                }),
+            ],
+            vjoinsplit: vec![
+                json!({
+                    "anchor": "someref",
+                    "nullifiers": serde_json::Value::Array(vec![]),
+                    "commitments": serde_json::Value::Array(vec![]),
+                    "macs": serde_json::Value::Array(vec![]),
+                    "vpub_old": 9.999,
+                    "vpub_new": 9.999,
+                }),
+            ],
+        }
+    }
+}
+
 #[derive(Serialize, Deserialize)]
 pub struct ZRequest<T> {
     jsonrpc: String,
@@ -180,6 +237,15 @@ impl ZClient {
             .params(vec![addr.to_owned()])
             .build();
         let res: ZResponse<Vec<Tx>> = self.send::<String, Vec<Tx>>(req)?;
+        Ok(res.result)
+    }
+
+    pub fn gettransaction(&self, txid: &str) -> Result<WalletTx, Error> {
+        let req = ZRequest::<String>::builder()
+            .method("gettransaction".to_string())
+            .params(vec![txid.to_owned()])
+            .build();
+        let res: ZResponse<WalletTx> = self.send::<String, WalletTx>(req)?;
         Ok(res.result)
     }
 
@@ -331,6 +397,41 @@ mod tests {
         let result = &txs[0];
         assert!(result == &expected);
         assert!(hex_to_string(&result.memo).unwrap().starts_with("hello zcash"));
+    }
+
+    #[test]
+    fn test_gettransaction() {
+        let expected_wtx = WalletTx::mock();
+        let txid = expected_wtx.txid.clone();
+        let data = json!({
+            "jsonrpc": "1.0", 
+            "method": "gettransaction", 
+            "params": vec![txid.clone()]
+        }).to_string();
+
+        let server = MockServer::start();
+        let mock = server.mock(|when, then| {
+            when.method(POST)
+                .path("/")
+                .body(data);
+            then.status(200)
+                .header("Content-Type", "application/json")
+                .body(json!({
+                    "result": expected_wtx,
+                    "error": Null,
+                    "id": Null,
+                }).to_string());
+        });
+
+        let wtx = ZClient::builder()
+            .with_url(server.url("/"))
+            .expect("Failed to parse URL")
+            .with_auth("user".to_string(), Some("pass".to_string()))
+            .build()
+            .gettransaction(&txid)
+            .expect("Failed to build client");
+
+        assert!(wtx == expected_wtx);
     }
 
     #[test]
