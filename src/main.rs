@@ -49,9 +49,74 @@ fn main() -> Result<(), Error> {
             }
         },
 
+        Cmd::Check => {
+            let txs = rpc_client.z_listaddresses()?
+                .iter()
+                .flat_map(|addr| rpc_client.z_listreceivedbyaddress(&addr).unwrap())
+                .filter(|tx| !tx.change)
+                .collect::<Vec<_>>();
+                
+            // let target = addrs[2].clone();
+            // check_msg(&rpc_client, &term, &target);
+
+            let num_msg = txs.len();
+            let mut heading = format!(
+                "{:=<90}\n> Got {} messages.\n{:=<90}",
+                "", num_msg, "",
+            );
+            term.write_line(&heading);
+
+            txs.iter().enumerate().for_each(|(i, tx)| {
+                let line = format!(
+                    "{:<2}Message #{} (val = {})\n",
+                    "|", i, tx.amount,
+                );
+                term.write_line(&line);
+            });
+        },
     }
 
     Ok(())
+}
+
+fn check_msg(c: &rpc::ZClient, t: &Term, addr: &str) -> Result<(), Error> {
+    let txs = c.z_listreceivedbyaddress(addr)?;
+    let num_msg = txs.len();
+    let mut heading = format!(
+        "\n{:=<90}\n> Got {} messages.\n{:=<90}\n",
+        "", num_msg, "",
+    );
+    t.write_line(&heading);
+    Ok(())
+    /*
+    let mut msg = format!(
+	"\n|{:^30}|{:^15}|{:^15}|\n|{:=^30}|{:=^15}|{:=^15}|",
+        "Service", "Unit File", "ExecStart",
+        "","","",
+    );
+    services.iter().for_each(|name| {
+	let filename = format!("{}.service", name);
+	let mut service_exist = false;
+	let mut daemon_exist = false;
+	let no = "✕";
+	let ok = "✓";
+	if let Some(_) = check_service_file(filename.clone()) {
+	    service_exist = true;
+	}
+	if let Ok(_) = check_exec_start(filename.as_str()) {
+	    daemon_exist = true;
+	}
+	let row = format!(
+	    "\n|{:^30}|{:^15}|{:^15}|",
+	    filename,
+	    if service_exist { ok } else { no },
+	    if daemon_exist { ok } else { no },
+	);
+	msg += &row;
+    });
+    msg += "\n";
+    term.write_line(&msg.as_str());
+    */
 }
 
 fn send_msg_to(c: &rpc::ZClient, to: &str, msg: &str, amount: Option<f32>) -> Result<String, Error> {

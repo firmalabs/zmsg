@@ -21,6 +21,8 @@ pub enum Cmd {
         /// a z_address of the recipient
         all: bool,
     },
+    /// Check incoming messages
+    Check,
 }
 
 impl ToString for Cmd {
@@ -28,6 +30,7 @@ impl ToString for Cmd {
 	match self {
             Self::Sendmsg{ .. } => String::from("sendmsg"),
             Self::Zaddr{ .. } => String::from("zaddr"),
+            Self::Check => String::from("check"),
 	}
     }
 }

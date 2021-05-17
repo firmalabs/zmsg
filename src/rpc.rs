@@ -49,10 +49,10 @@ pub struct ZResponse<T> {
 #[derive(Debug, Serialize, Deserialize, PartialEq)]
 #[serde(rename_all = "camelCase")]
 pub struct Tx {
-    txid: String,
-    amount: f32,
+    pub txid: String,
+    pub amount: f32,
+    pub memo: String,
     amount_zat: usize,
-    memo: String,
     outindex: usize,
     confirmations: usize,
     blockheight: usize,
@@ -62,7 +62,7 @@ pub struct Tx {
     jsindex: Option<usize>,
     #[serde(skip_serializing_if = "Option::is_none")]
     jsoutindex: Option<usize>,
-    change: bool,
+    pub change: bool,
 }
 
 #[derive(Serialize, Deserialize)]
