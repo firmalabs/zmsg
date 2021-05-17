@@ -55,23 +55,25 @@ fn main() -> Result<(), Error> {
                 .flat_map(|addr| rpc_client.z_listreceivedbyaddress(&addr).unwrap())
                 .filter(|tx| !tx.change)
                 .collect::<Vec<_>>();
-                
-            // let target = addrs[2].clone();
-            // check_msg(&rpc_client, &term, &target);
 
-            let num_msg = txs.len();
+            let num_msg = &txs.len();
             let mut heading = format!(
                 "{:=<90}\n> Got {} messages.\n{:=<90}",
                 "", num_msg, "",
             );
             term.write_line(&heading);
-
             txs.iter().enumerate().for_each(|(i, tx)| {
-                let line = format!(
+                let line1 = format!(
                     "{:<2}Message #{} (val = {})\n",
                     "|", i, tx.amount,
                 );
-                term.write_line(&line);
+                let line2 = &format!("{:<2}To:\n", "|");
+                let line3 = &format!("{:<2}Date:\n", "|");
+                let line4 = &format!("{:<2}\n", "|");
+                let line5 = &format!("{:<4}{}\n", "|", hex::hex_to_string(&tx.memo).unwrap_or("".to_string()));
+                let end = &format!("{:=<90}", "");
+                let block = line1 + line2 + line3 + line4 + line5 + end;
+                term.write_line(&block);
             });
         },
     }
@@ -88,35 +90,6 @@ fn check_msg(c: &rpc::ZClient, t: &Term, addr: &str) -> Result<(), Error> {
     );
     t.write_line(&heading);
     Ok(())
-    /*
-    let mut msg = format!(
-	"\n|{:^30}|{:^15}|{:^15}|\n|{:=^30}|{:=^15}|{:=^15}|",
-        "Service", "Unit File", "ExecStart",
-        "","","",
-    );
-    services.iter().for_each(|name| {
-	let filename = format!("{}.service", name);
-	let mut service_exist = false;
-	let mut daemon_exist = false;
-	let no = "✕";
-	let ok = "✓";
-	if let Some(_) = check_service_file(filename.clone()) {
-	    service_exist = true;
-	}
-	if let Ok(_) = check_exec_start(filename.as_str()) {
-	    daemon_exist = true;
-	}
-	let row = format!(
-	    "\n|{:^30}|{:^15}|{:^15}|",
-	    filename,
-	    if service_exist { ok } else { no },
-	    if daemon_exist { ok } else { no },
-	);
-	msg += &row;
-    });
-    msg += "\n";
-    term.write_line(&msg.as_str());
-    */
 }
 
 fn send_msg_to(c: &rpc::ZClient, to: &str, msg: &str, amount: Option<f32>) -> Result<String, Error> {

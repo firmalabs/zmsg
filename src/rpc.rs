@@ -46,7 +46,7 @@ pub struct ZResponse<T> {
 }
 
 // FIXME: Manually implement PartialEq for testing.
-#[derive(Debug, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Serialize, Deserialize, PartialEq, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct Tx {
     pub txid: String,
