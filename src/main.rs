@@ -70,10 +70,13 @@ fn main() -> Result<(), Error> {
 
 
                 let wtx: rpc::WalletTx = rpc_client.gettransaction(txid).unwrap();
-                let dt: DateTime<Local> = Local.from_local_datetime(
+                let dt: DateTime<Local> = Local.from_utc_datetime(
                     &NaiveDateTime::from_timestamp((wtx.time as u32).into(), 0)
-                ).unwrap();
-                let formatted_dt = dt.to_rfc3339();
+                );
+
+                // let formatted_dt = dt.to_rfc3339();
+                let format_str = format!("%a %b %e{} %Y {} %T", ",", "at");
+                let formatted_dt = dt.format(&format_str);
 
                 let line1 = format!(
                     "{:<2}Message #{} (val = {})\n",
