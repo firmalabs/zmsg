@@ -1,6 +1,5 @@
-use hex::{ToHex, FromHex};
 use std::str;
-use anyhow::{anyhow, Error};
+use anyhow::Error;
 use reqwest::blocking::Client;
 use reqwest::header::CONTENT_TYPE;
 use serde::{Serialize, Deserialize, de::DeserializeOwned};

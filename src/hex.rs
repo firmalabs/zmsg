@@ -1,4 +1,3 @@
-use hex::{ToHex, FromHex};
 use std::str;
 use anyhow::{anyhow, Error};
 
