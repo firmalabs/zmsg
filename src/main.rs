@@ -11,6 +11,7 @@ use anyhow::{Result, Error};
 use chrono::{DateTime, NaiveDateTime, TimeZone, Local};
 
 const DEFAULT_AMOUNT: f32 = 0.0001;
+const TESTNET_PORT: &str = "18232";
 
 fn main() -> Result<(), Error> {
     let cli = Cli::from_args();
@@ -19,7 +20,7 @@ fn main() -> Result<(), Error> {
 
     let (u, p) = auth::read_auth_creds(None)?;
     let rpc_client = rpc::ZClient::builder()
-        .with_url("http://127.0.0.1:9999".to_owned())?
+        .with_url(format!("http://127.0.0.1:{port}", port = TESTNET_PORT))?
         .with_auth(u, Some(p))
         .build();
         
