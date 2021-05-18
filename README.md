@@ -2,7 +2,7 @@
 
 A zero knowledge messaging system built on zcash.
 
-zmsg uses the encrypted memo field of zcash sheilded transactions to send messages to other parties. The sent messages get stored in the zcash blockchain and the recipient can check for messages at any time (no need to be online at the same time). Since the messages get stored in the blockchain, they are on every full zcash node. The implication here is that its not possible to tell who the target of any given message is.
+zmsg uses the encrypted memo field of zcash shielded transactions to send messages to other parties. The sent messages get stored in the zcash blockchain and the recipient can check for messages at any time (no need to be online at the same time). Since the messages get stored in the blockchain, they are on every full zcash node. The implication here is that its not possible to tell who the target of any given message is.
 
 Currently, each message sends 0.0001 ZEC. You can change this value by setting the  `--txval` flag on `sendmsg`.
 
@@ -17,6 +17,25 @@ cargo install github.com/firmalabs/zmsg
 Usage
 -----
 Note: To use zmsg, you'll need a running [zcash daemon][zcash-node] (node), a z_address, and some spare ZEC in that address.
+
+```shell
+zmsg 0.1.0
+Pancy <pancy@firma.org>
+A zero knowledge messaging system built on zcash.
+
+USAGE:
+    zmsg <SUBCOMMAND>
+
+FLAGS:
+    -h, --help       Prints help information
+    -V, --version    Prints version information
+
+SUBCOMMANDS:
+    check      Check incoming messages
+    help       Prints this message or the help of the given subcommand(s)
+    sendmsg    Send a 512-byte encrypted memo to a target z_address with a default spare ZEC of 0.0001 ZEC
+    zaddr      Get my available shielded address(es)
+```
 
 ### sendmsg
 
